@@ -1,0 +1,44 @@
+---
+- name: Configure Manage Nodes
+  hosts: manage_nodes
+  become: yes
+
+  vars_files:
+    - configMOTD.yaml
+
+  tasks:
+    - name: Update package cache (apt)
+      apt:
+        update_cache: yes
+      when: ansible_pkg_mgr == "apt"
+
+    - name: Install Python 3 and Pip 3
+      package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+      become: yes
+
+    - name: Set Python 3 as the default python
+      alternatives:
+        name: python
+        path: /usr/bin/python3
+
+    - name: Install OpenJDK
+      package:
+        name: openjdk-11-jdk
+        state: present
+      become: yes
+
+    - name: Set MOTD (Message of the Day)
+      copy:
+        content: "{{ motd_message | default('Ansible Managed node by ' ~ ansible_user) }}"
+        dest: /etc/motd
+
+    - name: Create User
+      user:
+        name: "{{ new_user }}"
+        state: present
+      become: yes
