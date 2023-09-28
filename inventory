@@ -1,9 +1,5 @@
-[localhosts]
-192.168.56.110 ansible_connection=ssh
-192.168.56.103 ansible_connection=local
-192.168.56.102 ansible_connection=local
+[manage_nodes]
+node1 ansible_host=192.168.56.103
 
-
-
-
-#hostname ansible_user=your_ssh_username
+[manage_nodes:vars]
+ansible_user=192.168.56.110
