@@ -1,41 +1,61 @@
 ---
-- name: Configure Managed Nodes
-  hosts: managed_nodes
-  become: yes
-  vars_files:
-    - config.yaml
-  tasks:
-    - name: Install Python3 and pip3
-      apt:
-        name: ['python3', 'python3-pip']
-        state: present
-      become: yes
+ - hosts: all
+   become: true
+   tasks:
 
-    - name: Set pip3 as default pip
-      alternatives:
-        name: /usr/bin/pip
-        path: /usr/bin/pip3
+   - name: install python3 and pip3 for ubuntu
+     apt:
+       name:
+         - python3
+         - python3-pip
+       state: latest
+       update_cache: yes
+     when: ansible_distribution == "Ubuntu"
 
-    - name: Set python3 as default python
-      alternatives:
-        name: /usr/bin/python
-        path: /usr/bin/python3
+   - name: install python3 and pip3 for Centos
+     package:
+        name:
+          - python3
+          - python3-pip
+        state: latest
+        update_cache: yes
+     when: ansible_distribution == "Centos"
 
-    - name: Install OpenJDK
-      apt:
-        name: openjdk-11-jdk
-        state: present
-      become: yes
+   - name: install java for ubuntu
+     apt:
+       name:
+         - openjdk-17-jdk
+       state: latest
+       update_cache: yes
+     when: ansible_distribution == "Ubuntu"
 
-    - name: Set MOTD (Message of the Day)
-      template:
-        src: motd.j2
-        dest: /etc/motd
-      become: yes
+   - name: install java openjdk for Centos
+     yum:
+        name:
+          - java-11-openjdk
+        state: latest
+        update_cache: yes
+     when: ansible_distribution == "Centos"
 
-    - name: Create User
-      user:
-        name: "{{ user_name }}"
-        state: present
-        shell: /bin/bash
-      become: yes
+   - name: Motd message
+     lineinfile:
+       path: /etc/motd
+       line: "{{ Welcome! Ansible Managed Node by Cabanatan | default('Ansible Managed Node by ' + ansible_user) }}"
+     register: motd_result
+     when: motd_message is defined
+
+   - name: Set Default Motd message
+     lineinfile:
+       path: /etc/motd
+       line: "Ansible Managed node by {{ ansible_user }}"
+     when: motd_message is not defined
+
+   - name: Display Motd result
+     debug:
+       msg: "Motd Content: {{ lookup('file', '/etc/motd') }}"
+
+   - name: Create a new user
+     user:
+       name: "{{ new_username }}"
+       state: present
+     when: new_username is defined
