@@ -1,48 +1,41 @@
 ---
-- name: Configure Manage Nodes
-  hosts: localhosts
+- name: Configure Managed Nodes
+  hosts: managed_nodes
   become: yes
-  gather_facts: yes
-
   vars_files:
     - config.yaml
-
   tasks:
-    - name: Update package cache (Debian/Ubuntu)
+    - name: Install Python3 and pip3
       apt:
-        update_cache: yes
-      when: ansible_os_family == "Debian"
+        name: ['python3', 'python3-pip']
+        state: present
+      become: yes
 
-    - name: Install python3 and pip3
-      package:
-        name: "{{ item }}"
-        state: latest
-      with_items:
-        - python3
-        - python3-pip
-      when: ansible_os_family == "Debian"
-
-    - name: Set Python 3 as the default python
+    - name: Set pip3 as default pip
       alternatives:
-        name: python
-        path: /usr/bin/python3
-      when: ansible_os_family == "Debian"
+        name: /usr/bin/pip
+        path: /usr/bin/pip3
 
-    - name: Install OpenJDK (Java)
-      package:
+    - name: Set python3 as default python
+      alternatives:
+        name: /usr/bin/python
+        path: /usr/bin/python3
+
+    - name: Install OpenJDK
+      apt:
         name: openjdk-11-jdk
         state: present
-      when: ansible_os_family == "Debian"
+      become: yes
 
-    - name: Set MOTD
-      copy:
-        content: "{{ motd_text | default('Ansible Managed node by ' + ansible_user) }}"
+    - name: Set MOTD (Message of the Day)
+      template:
+        src: motd.j2
         dest: /etc/motd
-      when: ansible_os_family == "Debian"
+      become: yes
 
     - name: Create User
       user:
-        name: "{{ new_username }}"
+        name: "{{ user_name }}"
         state: present
         shell: /bin/bash
-      when: ansible_os_family == "Debian"
+      become: yes
