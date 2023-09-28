@@ -1,37 +1,48 @@
 ---
-- hosts: all
+- name: Configure Manage Nodes
+  hosts: localhosts
+  become: yes
+  gather_facts: yes
+
+  vars_files:
+    - config.yaml
+
   tasks:
-  - name: Install Python 3
-    apt:
-      name: python3
-      state: present
+    - name: Update package cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
-  - name: Install Pip 3
-    apt:
-      name: python3-pip
-      state: present
+    - name: Install python3 and pip3
+      package:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - python3
+        - python3-pip
+      when: ansible_os_family == "Debian"
 
-  - name: Make Pip 3 the default pip
-    command:
-      cmd: sudo update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+    - name: Set Python 3 as the default python
+      alternatives:
+        name: python
+        path: /usr/bin/python3
+      when: ansible_os_family == "Debian"
 
-  - name: Make Python 3 the default python
-    command:
-      cmd: sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+    - name: Install OpenJDK (Java)
+      package:
+        name: openjdk-11-jdk
+        state: present
+      when: ansible_os_family == "Debian"
 
-  - name: Install Java OpenJDK
-    apt:
-      name: openjdk-11-jdk
-      state: present
+    - name: Set MOTD
+      copy:
+        content: "{{ motd_text | default('Ansible Managed node by ' + ansible_user) }}"
+        dest: /etc/motd
+      when: ansible_os_family == "Debian"
 
-  - name: Create Motd
-    lineinfile:
-      dest: /etc/motd
-      line: "{{ ansible_hostname }} is an Ansible managed node by {{ ansible_user }}"
-      when: motd is not defined or motd == ""
-
-  - name: Create User
-    user:
-      name: "{{ user_name }}"
-      state: present
-      createhome: yes
+    - name: Create User
+      user:
+        name: "{{ new_username }}"
+        state: present
+        shell: /bin/bash
+      when: ansible_os_family == "Debian"
