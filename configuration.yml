@@ -36,8 +36,8 @@
 
     - name: Set MOTD
       copy:
-        content: "{{ motd_text | default('Ansible Managed node by ' + ansible_user) }}"
-        dest: /etc/motd
+        content: "{{ motd_text | default('Ansible Managed node by ' + Ortega) }}"
+        dest: /home/victor/PrelimCPE232
       when: ansible_os_family == "Debian"
 
     - name: Create User
