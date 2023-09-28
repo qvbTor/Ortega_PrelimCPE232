@@ -1,3 +1,4 @@
-[manage_nodes]
-manage-node1 ansible_host=192.168.56.103
-manage-node2 ansible_host=192.168.56.110
+[localhosts]
+192.168.56.103
+192.168.56.102
+
