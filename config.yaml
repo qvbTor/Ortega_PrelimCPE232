@@ -1,44 +1,34 @@
 ---
-- name: Configure Manage Nodes
+- name: Configure Managed Nodes
   hosts: manage_nodes
   become: yes
-
-  vars_files:
-    - configMOTD.yaml
+  become_user: root
 
   tasks:
-    - name: Update package cache (apt)
-      apt:
-        update_cache: yes
-      when: ansible_pkg_mgr == "apt"
+    - name: Ensure Python 3 and pip3 are installed
+      raw: "apt-get update && apt-get -y install python3 python3-pip"
 
-    - name: Install Python 3 and Pip 3
-      package:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - python3
-        - python3-pip
-      become: yes
+    - name: Use pip3 as the default pip
+      command: update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 
-    - name: Set Python 3 as the default python
-      alternatives:
-        name: python
-        path: /usr/bin/python3
+    - name: Use Python 3 as the default Python
+      command: update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
     - name: Install OpenJDK
-      package:
+      apt:
         name: openjdk-11-jdk
         state: present
-      become: yes
 
-    - name: Set MOTD (Message of the Day)
-      copy:
-        content: "{{ motd_message | default('Ansible Managed node by ' ~ ansible_user) }}"
-        dest: /etc/motd
+    - name: Create MOTD file
+      template:
+        src: motd.j2
+        dest: /home/victor/PrelimCPE232
+      vars:
+        motd_text: "{{ motd_message | default('Ansible Managed node by ' Ortega) }}"
 
-    - name: Create User
+    - name: Create a user
       user:
-        name: "{{ new_user }}"
+        name: "{{ ortega }}"
         state: present
-      become: yes
+      vars:
+        user_name: "{{ user_config.ortega }}"
