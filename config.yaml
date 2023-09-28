@@ -40,7 +40,7 @@
    - name: Motd message
      lineinfile:
        path: /etc/motd
-       line: "{{ Welcome! Ansible Managed Node by Cabanatan | default('Ansible Managed Node by ' + ansible_user) }}"
+       line: "{{ Welcome! Ansible Managed Node by Ortega | default('Ansible Managed Node by ' + ansible_user) }}"
      register: motd_result
      when: motd_message is defined
 
